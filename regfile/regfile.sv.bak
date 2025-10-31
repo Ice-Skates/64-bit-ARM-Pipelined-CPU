@@ -1,0 +1,131 @@
+`timescale 1ps/1ps
+
+
+module regfile (ReadData1, ReadData2, WriteData, ReadRegister1, ReadRegister2, WriteRegister, 
+					RegWrite, clk);
+
+			
+		input logic	[4:0]		ReadRegister1, ReadRegister2, WriteRegister;
+		input logic [63:0]	WriteData;
+		input logic				RegWrite, clk;
+		output logic [63:0]	ReadData1, ReadData2;
+		
+		logic [31:0] writeEnable;
+		logic [15:0] secondDecoderOut;
+		logic [3:0] out2to4; 
+		
+		logic [31:0][63:0] registers;
+		
+
+		
+		and #50 de2to4_1   (out2to4[0], ~WriteRegister[3], ~WriteRegister[4], RegWrite);
+		and #50 de2to4_2   (out2to4[1], WriteRegister[3], ~WriteRegister[4], RegWrite);
+		and #50 de2to4_3   (out2to4[2], ~WriteRegister[3], WriteRegister[4], RegWrite);
+		and #50 de2to4_4   (out2to4[3], WriteRegister[3], WriteRegister[4], RegWrite);
+				
+		
+	
+		enDecoder3_8 dec3_8_1 (.enable(out2to4[0]), .in({WriteRegister[2], WriteRegister[1], WriteRegister[0]}), 
+									.out(writeEnable[7:0]));
+									
+		enDecoder3_8 dec3_8_2 (.enable(out2to4[1]), .in({WriteRegister[2], WriteRegister[1], WriteRegister[0]}), 
+									  .out(writeEnable[15:8]));
+								  
+		enDecoder3_8 dec3_8_3 (.enable(out2to4[2]), .in({WriteRegister[2], WriteRegister[1], WriteRegister[0]}), 
+									  .out(writeEnable[23:16]));
+									  
+		enDecoder3_8 dec3_8_4 (.enable(out2to4[3]), .in({WriteRegister[2], WriteRegister[1], WriteRegister[0]}), 
+									  .out(writeEnable[31:24]));
+									  
+			
+
+		genvar n;
+		genvar m;
+		
+		
+			generate 
+			
+				for(m = 0; m < 31; m++) begin : regs		
+				
+						for(n = 0; n < 64; n++) begin : DFFs
+											
+							singleReg writetoregister(.enable(writeEnable[m]), .writeData(WriteData[n]), .reset(reset),
+												  .clk(clk), .out(registers[m][n]));
+												  						
+												  
+							end					  
+				end
+		endgenerate
+					
+		
+		genvar c;
+			generate
+				for (c = 0; c < 64; c++) begin : reg31
+				
+					singleReg writetoregister(.enable(writeEnable[31]), .writeData(0), .reset(reset),
+						.clk(clk), .out(registers[31][c]));
+						
+				end
+				
+		endgenerate 
+				
+		
+		genvar i;
+		
+			generate
+			
+			
+				for(i=0; i < 64; i++) begin : eachReg
+				
+					logic [31:0] temp_bits;
+				
+					genvar j;
+        
+					for(j=0; j<32; j++) begin: storetemp
+				
+						
+						assign temp_bits[j] = registers[j][i];
+					
+					end
+				
+					mux32_1 mux32_1_1(.registers(temp_bits), .ReadRegister(ReadRegister1),
+											.out(ReadData1[i]));
+											
+											
+											
+					mux32_1 mux32_1_2(.registers(temp_bits), .ReadRegister(ReadRegister2),
+											.out(ReadData2[i]));
+					
+				end
+
+		endgenerate
+	endmodule
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+	
+
+
+
+
+

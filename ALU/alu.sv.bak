@@ -1,0 +1,130 @@
+module alu (A, B, cntrl, result, negative, zero, overflow, carry_out);
+
+	input logic [63:0]	A, B;
+	input logic [2:0]		cntrl;
+	output logic [63:0]	result;
+	output logic negative, zero, overflow, carry_out;
+	
+
+	// Meaning of signals in and out of the ALU:
+
+	// Flags:
+	// negative: whether the result output is negative if interpreted as 2's comp.
+	// zero: whether the result output was a 64-bit zero.
+	// overflow: on an add or subtract, whether the computation overflowed if the inputs are interpreted as 2's comp.
+	// carry_out: on an add or subtract, whether the computation produced a carry-out.
+
+	// cntrl			Operation						Notes:
+	// 000:			result = B						value of overflow and carry_out unimportant
+	// 010:			result = A + B
+	// 011:			result = A - B
+	// 100:			result = bitwise A & B		value of overflow and carry_out unimportant
+	// 101:			result = bitwise A | B		value of overflow and carry_out unimportant
+	// 110:			result = bitwise A XOR B	value of overflow and carry_out unimportant
+	
+	
+	
+	
+	
+	//ROAD MAP
+	
+	//Design every operation, store result and store the flags test benches and such
+	//Once all operations are designed design the 8:1 mux
+	
+	//Op codes are unintuitive, skips 001
+	
+	//I'm thinking a check zero method could save a lot of time.
+	
+	
+	//DEFINED LOGIC
+	
+	//using 8 bits for convience of the 8 to 1 mux, though the 7th, 8th bit will remain null
+	//^^^POSSIBLY
+	
+	//Right now I'll use 6 bits
+	
+	
+	logic [7:0] negativeAll, zeroAll, overflowAll, carry_outAll;
+	logic [5:0][63:0] allResults;
+
+	
+	outputB outputB(.B(B), .negative(negativeAll[0]), .zero(zeroAll[0]), 
+							.overflow(overflowAll[0]), .carry_out(carry_outAll[0]), .result(allResults[0]));
+	
+	outputAdd outputAdd(.A(A), .B(B), .negative(negativeAll[2]), .zero(zeroAll[2]), 
+						.overflow(overflowAll[2]), .carry_out(carry_outAll[2]), .result(allResults[1]));
+	
+	outputSub outputSub(.A(A), .B(B), .negative(negativeAll[3]), .zero(zeroAll[3]), 
+						.overflow(overflowAll[3]), .carry_out(carry_outAll[3]), .result(allResults[2]));
+						
+	outputAnd outputAnd(.A(A), .B(B), .negative(negativeAll[4]), .zero(zeroAll[4]), 
+						.overflow(overflowAll[4]), .carry_out(carry_outAll[4]), .result(allResults[3]));
+						
+	outputOr outputOr(.A(A), .B(B), .negative(negativeAll[5]), .zero(zeroAll[5]), 
+						.overflow(overflowAll[5]), .carry_out(carry_outAll[5]), .result(allResults[4]));
+						
+	outputXor outputXor(.A(A), .B(B), .negative(negativeAll[6]), .zero(zeroAll[6]), 
+						.overflow(overflowAll[6]), .carry_out(carry_outAll[6]), .result(allResults[5]));
+						
+						
+	//3 to 8 mux to determine which output 
+	//so loop for all 64 bits, using an 8 to 1 mux
+	
+	
+	genvar i;
+		
+		generate
+			
+			
+			for(i=0; i<64; i++) begin : resultLoop
+			
+				
+				
+				logic [7:0] temp_results;        
+				
+				
+//				assign temp_results[0] = allResults[0][i];
+//				assign temp_results[1] = 1'b0;
+//				assign temp_results[2] = allResults[1][i];
+//				assign temp_results[3] = allResults[2][i];
+//				assign temp_results[4] = allResults[3][i];
+//				assign temp_results[5] = allResults[4][i];		//correct but commented for testing
+//				assign temp_results[6] = allResults[5][i];
+//				assign temp_results[7] = 1'b0;
+
+
+				assign temp_results[0] = allResults[0][i];
+				assign temp_results[1] = 1'b0;
+				assign temp_results[2] = allResults[1][i];
+				assign temp_results[3] = allResults[2][i];
+				assign temp_results[4] = allResults[3][i];
+				assign temp_results[5] = allResults[4][i];
+				assign temp_results[6] = allResults[5][i];
+				assign temp_results[7] = 1'b0;
+				
+		
+				mux8to1 mux8_1_1(.results(temp_results), .cntrl(cntrl),
+											.out(result[i]));
+				
+											
+					
+			end
+
+		endgenerate
+		
+		mux8to1 mux8_1_2(.results(negativeAll), .cntrl(cntrl),
+							.out(negative));
+							
+		mux8to1 mux8_1_3(.results(zeroAll), .cntrl(cntrl),
+							.out(zero));
+
+		mux8to1 mux8_1_4(.results(overflowAll), .cntrl(cntrl),
+							.out(overflow));
+					
+		mux8to1 mux8_1_5(.results(carry_outAll), .cntrl(cntrl),
+							.out(carry_out));
+		
+
+		
+//WHY IS ENDMODULE NOT BLUEEEEEEEEEEEEEEEEEeee	
+	endmodule

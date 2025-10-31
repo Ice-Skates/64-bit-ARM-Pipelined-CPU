@@ -1,0 +1,29 @@
+//USER TEST 1 ADDI NO BRANCH
+
+// Test of ADDI instruction, WITHOUT a final B(ranch) instruction to stay in one place.
+// Requires:
+// ADDI
+// Expected results:
+// X0 = 0
+// X1 = 1
+// X2 = 2
+// X3 = 3
+// X4 = 4
+
+//ADDI: I-type, Reg[Rd] = Reg[Rn] + {'0, Imm12}
+//OP         Imm12        Rn    Rd
+//3322222222 221111111111 00000 00000
+//1098765432 109876543210 98765 43210
+//1001000100 Unsigned     0..31 0..31
+
+
+//Note: X31 is always 0.
+               // MAIN:
+10010001000000000000001111100000    // ADDI X0, X31, #0     // X0 = 0
+10010001000000000000010000000001    // ADDI X1, X0, #1      // X1 = 1
+10010001000000000000010000100010    // ADDI X2, X1, #1      // X2 = 2
+10010001000000000000100000100011    // ADDI X3, X1, #2      // X3 = 3
+10010001000000000001000000000100    // ADDI X4, X0, #4      // X4 = 4
+00010100000000000000000000000000      // HALT:B HALT          // HALT = 0
+
+

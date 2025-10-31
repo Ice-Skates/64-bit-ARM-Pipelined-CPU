@@ -1,0 +1,81 @@
+`timescale 1ps/1ps
+
+
+module outputAdd (A, B, negative, zero, overflow, carry_out, result);
+
+	input logic [63:0] A, B;
+	output logic negative, zero, overflow, carry_out;
+	output logic [63:0] result;
+	
+	// Okay need a full adder.... Let's see
+	
+	
+	logic [63:0] carryIn;
+	
+	fa1Bit fa_1(.sum(result[0]), .carryOut(carryIn[1]), .A(A[0]), .B(B[0]), .carryIn(1'b0));
+
+
+	
+	genvar i;
+	
+		generate
+		
+			for(i = 1; i < 63; i++) begin: add
+				
+				//Not sure this'll work, probably an issue with the carryIn/carryOut stuff
+				fa1Bit fa_2(.sum(result[i]), .carryOut(carryIn[i + 1]), .A(A[i]), .B(B[i]), .carryIn(carryIn[i]));
+				
+			end
+			
+		endgenerate
+		
+	logic lastCarry_Out;
+		
+		
+	fa1Bit fa_3(.sum(result[63]), .carryOut(lastCarry_Out), .A(A[63]), .B(B[63]), .carryIn(carryIn[62]));
+
+	
+	buf #50 negativeWrite(negative, result[63]); 
+	xor #50 overflowWrite(overflow, carryIn[63], lastCarry_Out);
+	buf #50 carrOutWrite(carry_out, lastCarry_Out);
+	
+	checkZero checkZeroAdd(result, zero);
+	
+	endmodule
+	
+
+	
+
+
+module outputAdd_testbench();
+
+
+	logic [63:0] A, B;
+	logic negative, zero, overflow, carry_out;
+	logic [63:0] result;
+
+	outputAdd addtest(A, B, negative, zero, overflow, carry_out, result);
+
+	initial begin
+			
+		A = 64'h0000000000000010; B = 64'h0000000000000001;
+		#20
+
+		$display(" %b %b | %b %b %b %b %b", A, B, result, zero, overflow, negative, carry_out);
+		
+		
+		A = 64'h0000000000000010; B = 64'h0000000000000001;
+		#20
+
+		$display(" %b %b | %b %b %b %b %b", A, B, result, zero, overflow, negative, carry_out);
+
+		$stop;
+		
+	end
+	
+endmodule
+			
+
+		
+
+	

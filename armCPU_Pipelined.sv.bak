@@ -1,0 +1,478 @@
+//Nate Snyder, CSE 469 Project 3, Single-Cycle ARM CPU
+
+`timescale 1ps/1ps
+
+package structures;
+
+	typedef struct packed { //########## need lots more signals for all of them
+
+		logic	ALU_src;
+		logic [1:0] ALU_op;
+
+	}  struct_EX;
+
+
+	typedef struct packed {
+
+		logic br_taken;
+		//logic	zero_flag; 
+		logic	mem_write;
+		logic	pc_src;
+		logic mem_read;
+		//logic unconbr
+
+	}	struct_MEM;
+
+
+	typedef struct packed {
+		
+		logic reg_write;
+		logic mem_to_reg;
+		
+	}	struct_WB;
+	
+	 typedef struct packed {
+	 
+	  logic D_type;     // LDUR / STUR   (9-bit imm)
+	  logic I_type;     // ADDI / SUBI … (12-bit imm)
+	  logic B_type;     // B / BL        (26-bit imm <<2)
+	  logic CB_type;    // CBZ / CBNZ    (19-bit imm <<2)
+	  
+	} format_type;
+	
+	
+endpackage : structures
+
+
+import structures::*;
+
+
+module armCPU_Pipelined (clk, rst);
+
+	input logic clk, rst;
+	
+
+	
+	//logic sel_reg_dst; ############## where does this go?
+
+	//needs ex_mem_out
+
+/*
+
+Instruction fetch: The top portion of Figure 4.36 shows the instruction being
+read from memory using the address in the PC and then being placed in the
+IF/ID pipeline register. The PC address is incremented by 4 and then written
+back into the PC to be ready for the next clock cycle. This incremented
+address is also saved in the IF/ID pipeline register in case it is needed later
+for an instruction, such as beq. The computer cannot know which type of
+instruction is being fetched, so it must prepare for any instruction, passing
+potentially needed information down the pipeline.
+
+*/
+	//PCsrc comes from brTaken and zeroFlag mux after EX/MEM reg ##################
+	
+	
+	
+	
+// ########################## IF STAGE & PC #############################
+
+
+	logic [63:0] pc_add4, pc_id; 
+	logic [31:0] instruction_if; //instruction from PC to IF/ID reg
+	logic [31:0] instruction_id; //instruction out of IF/ID reg
+	logic 		 if_pc_src;
+	logic [63:0]			mem_pc_br_data; 
+
+	
+//	ProgramCounter prog_coutn(
+//	
+//			.PC 
+//			.PCnext
+//			.PCAdd4 			(pc_add4)
+//			.clk				(clk),				##### do i need this? might be in IF block already
+//			.rst				(rst)
+//			 
+//		);
+		
+
+	IF_Stage  if_Stage(
+	
+							 .pc_src							(if_pc_src), 
+							 .ex_mem_out					(mem_pc_br_data), 
+							 .clk								(clk), 
+							 .rst								(rst), 
+							 
+							 //outputs
+							 .pc_add4						(pc_add4), 
+							 .instruction					(instruction_if)
+							 
+							 
+				 ); 
+	
+	
+	
+	
+// ######################### IF/ID REGISTER #############################
+
+	IF_ID_reg if_id_register (
+	
+								 .instruction_in			(instruction_if), 
+								 .pc_in						(pc_add4), 
+								 .clk							(clk),
+								 .rst							(rst),
+								 
+								 .pc_out						(pc_id),//should it be pc_add4 or pc?
+								 .instruction_out			(instruction_id) 
+								 
+								 ); 
+	
+	
+	
+	
+	
+// ######################### ID STAGE & CONTROL UNIT #############################
+
+	logic [63:0] read_data_1, 
+					 read_data_2;
+	
+	struct_EX 	 			id_EX;  
+	struct_MEM 	 			id_MEM; 
+	struct_WB	 			id_WB; 	
+	logic [63:0] 			id_write_data;
+	logic [63:0] 			se_data;
+	logic [4:0] 			id_write_reg;
+	logic						id_reg_wr;	
+	logic [4:0]				linked_or_Rd;
+
+
+
+	
+	ID_Stage  id_stage (
+	
+				 //
+				
+				 .clk								(clk), 
+				 .rst								(rst),
+				 .instruction_id				(instruction_id), 
+				 .reg_to_loc					(instruction_id[28]),
+				 .write_data					(id_write_data),
+				 .wr_reg_addr					(id_write_reg),
+				 .reg_write						(id_reg_wr),
+				 
+				 //outputs
+				 .se_data						(se_data),
+				 .read_data_1					(read_data_1), 
+				 .read_data_2					(read_data_2),
+				 .id_EX							(id_EX), 
+				 .id_MEM							(id_MEM), 
+				 .id_WB							(id_WB),
+				 .linked_or_Rd					(linked_or_Rd)
+				 
+			 );
+							 							
+
+// ######################### ID/EX REGISTER	##########################
+
+	
+	
+
+	// EX is for very next ALU, sel_ALU_src, ALU_op
+	// M, mem_read, mem_write, branch
+	// WB, #PCsrc#, Mem2Reg
+	
+	//reg needs instruction [31:21], instruction [4:0], seImm (other SE's too?), sel singals
+	
+	logic [63:0]		pc_ex;
+	logic [10:0] 		instruction_ALU_ctrl;
+	logic [63:0] 		read_data_1_ex, read_data_2_ex;
+	logic [63:0]		se_data_ex;
+	logic [31:0]		instruction_ex;
+	logic [4:0]	 		ex_Rd;
+
+
+	struct_EX 	ex_EX;  //	ALU_src, ALU_op
+	struct_MEM 	ex_MEM; //	brTaken, zeroflag, memWrite, PCSrc, memRead
+	struct_WB	ex_WB;  //	RegWrite, Mem2Reg
+	
+	
+	ID_EX_reg id_ex_reg (
+	
+				// inputs
+				
+				.read_data_1				(read_data_1), 		
+				.read_data_2				(read_data_2), 
+				.pc_id						(pc_id), 
+				.instruction_id			(instruction_id),
+				.id_EX						(id_EX), 
+				.id_MEM						(id_MEM), 
+				.id_WB						(id_WB), 
+				.se_data						(se_data),
+//				.Rm_if_id					(instruction_id[20:16]), 		//### NEED THESE LATER,
+//				.Rn_if_id					(instruction_id[9:5]), 		//THEY ARE ALSO COMMENTED IN THE MODULE
+				.linked_or_Rd				(linked_or_Rd), 
+				.clk							(clk),
+				.rst							(rst),
+				
+				
+				// outputs
+				
+				.pc_ex						(pc_ex), 
+				.instruction_ALU_ctrl	(instruction_ALU_ctrl), 				
+				.read_data_1_ex			(read_data_1_ex), 
+				.read_data_2_ex			(read_data_2_ex),
+				.se_data_ex					(se_data_ex),	
+//				.ex_Rm						(ex_Rm),
+//				.ex_Rn						(ex_Rn),
+				.ex_Rd						(ex_Rd),
+				.ex_EX						(ex_EX), 
+				.ex_MEM						(ex_MEM), 
+				.ex_WB						(ex_WB),
+				.instruction_ex			(instruction_ex)
+				
+				
+			);
+							
+							
+							
+// ######################### EX STAGE & ALU #############################
+
+
+	logic [3:0]			flags;
+	logic [63:0]		pc_br_data;
+	logic [63:0] 		ALU_result;
+
+
+	
+	EX_Stage ex_stage(
+	 
+				//inputs
+				.ex_EX						(ex_EX),
+				.ex_MEM						(ex_MEM),
+				.ex_WB						(ex_WB),
+				.read_data_1_ex			(read_data_1_ex),
+				.read_data_2_ex			(read_data_2_ex),
+				.pc_ex						(pc_ex),
+				.se_data_ex					(se_data_ex),
+				.instruction_ALU_ctrl	(instruction_ALU_ctrl),
+				.clk							(clk),
+				.rst							(rst),
+				
+				//outputs
+				.flags						(flags),
+				.pc_br_data					(pc_br_data),
+				.ALU_result					(ALU_result)
+	
+	); 
+
+// ################# EX/MEM ######################
+
+	logic [3:0] 			mem_flags;	
+	logic	[63:0]			mem_ALU_result;
+	logic [4:0]				mem_Rd;
+	logic [63:0]			read_data_2_mem;
+
+
+	struct_MEM 				mem_MEM; 
+	struct_WB				mem_WB; 	
+
+	EX_MEM_reg ex_mem_reg(
+	
+			//inputs
+			
+			.pc_br_data				(pc_br_data),
+			.ALU_result				(ALU_result),
+			.flags					(flags),
+			.ex_MEM					(ex_MEM),
+			.ex_WB					(ex_WB),
+			.ex_Rd					(ex_Rd),
+			.read_data_2_ex		(read_data_2_ex),
+			.clk						(clk),
+			.rst						(rst),
+
+			//outputs 
+			.mem_MEM					(mem_MEM),
+			.mem_WB					(mem_WB),
+			.mem_flags				(mem_flags),
+			.mem_ALU_result		(mem_ALU_result),
+			.read_data_2_mem		(read_data_2_mem),
+			.mem_Rd					(mem_Rd),
+			.mem_pc_br_data		(mem_pc_br_data)							//pc_br goes to IF
+			
+		);
+
+
+// ################# MEM ######################
+
+	logic	[63:0]			mem_read_data;
+	
+	
+	
+	MEM_Stage mem_stage(
+	
+			//inputs
+	
+			.mem_MEM					(mem_MEM),
+			.mem_WB					(mem_WB),
+			.mem_flags				(mem_flags),
+			.mem_ALU_result		(mem_ALU_result),
+			.read_data_2_mem		(read_data_2_mem),
+			.mem_Rd					(mem_Rd),
+			//.mem_pc_br_data		(mem_pc_br_data),
+			.clk						(clk),
+			.rst						(rst),
+			
+			//outputs
+			
+			.mem_read_data			(mem_read_data),
+			.if_pc_src				(if_pc_src)
+
+
+	);
+
+
+
+// ################# MEM/WB ######################
+
+	struct_WB			wb_WB;
+	logic	[63:0]		wb_read_data;
+	logic	[63:0]		wb_ALU_result;
+	logic [4:0]			wb_Rd;
+ 	
+
+
+	MEM_WB_reg mem_wb_register(
+	
+			//inputs
+	
+			.mem_read_data			(mem_read_data),
+			.mem_ALU_result		(mem_ALU_result),
+			.mem_WB					(mem_WB),
+			.mem_Rd					(mem_Rd),
+			.clk						(clk),
+			.rst						(rst),
+
+			
+			//outputs
+			.wb_read_data			(wb_read_data),
+			.wb_ALU_result			(wb_ALU_result),
+			.wb_Rd					(wb_Rd),					//goes directly to id write register
+			.wb_WB					(wb_WB)
+			
+
+	);
+	
+	
+// ################# WB STAGE ######################
+
+
+	
+	
+
+	
+	WB_Stage write_back_stage(
+	
+			//inputs
+			
+			.wb_read_data			(wb_read_data),
+			.wb_ALU_result			(wb_ALU_result),
+			.wb_Rd					(wb_Rd),
+			.wb_WB					(wb_WB),
+			.clk						(clk),
+			.rst						(rst),			
+
+			//outputs
+			
+			.id_write_data			(id_write_data),			//######### check the outputs 
+			.id_write_reg			(id_write_reg),
+			.id_reg_write			(id_reg_wr)
+			
+		);
+	
+	
+// ===================== END =======================
+
+	
+endmodule
+			  
+			  
+
+			  
+			  
+
+module armCPU_Pipelined_testbench(); //testbench
+
+	parameter ClockDelay = 10000;
+	logic clk, rst;
+
+	armCPU_Pipelined dut (.clk(clk), .rst(rst));	
+		
+		initial begin
+		
+			clk = 0;
+			
+			forever #(ClockDelay/2) clk = ~clk;
+		
+		end
+
+	
+		initial begin
+		
+			rst = 1;
+
+			#(ClockDelay);
+					
+			rst  = 0;
+
+			repeat (25) @(posedge clk);		
+
+		$stop;
+				
+	end
+	
+endmodule
+	
+	
+	
+	
+//	
+//	
+//	
+//module armCPU_testbench_old();
+//	parameter ClockDelay = 2000;
+//
+//	 logic clk, rst;
+////	 logic [63:0] PC;
+////	 logic [63:0] PCNext;	 
+////	
+//	armCPU dut (.clk(clk), .rst(rst));		
+//	initial begin 
+//		clk <= 0;
+//		forever #(ClockDelay/2) clk <= ~clk;
+//	end
+//	
+//	integer i;
+//		initial begin
+//		rst = 1;
+//		
+//		#ClockDelay;
+//
+//		PC = 64'd0;
+//		
+//		rst  = 0;
+//	
+//		@(posedge clk);
+//	
+//		$display("test works!");
+//
+//		for (i=0; i <= 20; i++) begin
+//			
+//			@(posedge clk); 
+//			
+//		end
+//		
+//		$stop;
+//				
+//	end
+//	
+//endmodule
+

@@ -1,0 +1,17 @@
+module ProgramCounter(PC
+
+	logic output [63:0] PC;
+	logic [63:0] PCNext; 
+	logic [63:0] pcAdd4;
+	
+	Adder PCadd4(.A(PC), .B(64'h0000000000000004), .result(pcAdd4));
+	
+	genvar z;
+		generate			
+			for(z = 0; z < 64; z++) begin : PCregs
+				singleReg writetoregister(.enable(1'b1), .writeData(PCNext[z]), .reset(rst),
+												  .clk(clk), .out(PC[z]));
+			end	
+	endgenerate	
+		
+	

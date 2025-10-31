@@ -1,0 +1,1 @@
+module IF_ID_reg(instruction, pc_add4)

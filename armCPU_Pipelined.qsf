@@ -1,0 +1,93 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2017  Intel Corporation. All rights reserved.
+# Your use of Intel Corporation's design tools, logic functions 
+# and other software and tools, and its AMPP partner logic 
+# functions, and any output files from any of the foregoing 
+# (including device programming or simulation files), and any 
+# associated documentation or information are expressly subject 
+# to the terms and conditions of the Intel Program License 
+# Subscription Agreement, the Intel Quartus Prime License Agreement,
+# the Intel MegaCore Function License Agreement, or other 
+# applicable license agreement, including, without limitation, 
+# that your use is for the sole purpose of programming logic 
+# devices manufactured by Intel and sold by Intel or its 
+# authorized distributors.  Please refer to the applicable 
+# agreement for further details.
+#
+# -------------------------------------------------------------------------- #
+#
+# Quartus Prime
+# Version 17.0.0 Build 595 04/25/2017 SJ Lite Edition
+# Date created = 13:58:45  May 15, 2025
+#
+# -------------------------------------------------------------------------- #
+#
+# Notes:
+#
+# 1) The default values for assignments are stored in the file:
+#		armCPU_Pipelined_assignment_defaults.qdf
+#    If this file doesn't exist, see file:
+#		assignment_defaults.qdf
+#
+# 2) Altera recommends that you do not modify this file. This
+#    file is updated automatically by the Quartus Prime software
+#    and any changes you make may be lost or overwritten.
+#
+# -------------------------------------------------------------------------- #
+
+
+set_global_assignment -name FAMILY "Cyclone IV E"
+set_global_assignment -name DEVICE auto
+set_global_assignment -name TOP_LEVEL_ENTITY armCPU_Pipelined
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 17.0.0
+set_global_assignment -name PROJECT_CREATION_TIME_DATE "13:58:45  MAY 15, 2025"
+set_global_assignment -name LAST_QUARTUS_VERSION "17.0.0 Lite Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
+set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
+set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
+set_global_assignment -name SYSTEMVERILOG_FILE struct/structures.sv
+set_global_assignment -name SYSTEMVERILOG_FILE datamem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE instructmem.sv
+set_global_assignment -name SYSTEMVERILOG_FILE IF_Stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU_Pipelined.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/outputXor.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/outputSub.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/outputOr.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/outputB.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/outputAnd.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/outputAdd.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/mux8to1.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/checkZero.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU/alu.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/singleReg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/regstim.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/regfile.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/mux32_1.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/mux4_1.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/mux2_1.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/enDecoder3_8.sv
+set_global_assignment -name SYSTEMVERILOG_FILE regfile/D_FF.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU/SignExtend.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU/fa1bit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU/CtrlUnit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU/checkBranches.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU/armCPU.sv
+set_global_assignment -name SYSTEMVERILOG_FILE armCPU/Adder.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ProgramCounter.sv
+set_global_assignment -name SYSTEMVERILOG_FILE IF_ID_reg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ID_Stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Control.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Sign_Extender.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ID_EX_reg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE EX_Stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ALU_ctrl.sv
+set_global_assignment -name SYSTEMVERILOG_FILE EX_MEM_reg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE MEM_Stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE MEM_WB_reg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE WB_Stage.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Forwarding_Unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Hazard_Detection_Unit.sv
+set_global_assignment -name SYSTEMVERILOG_FILE Conditonal_Branch_Check.sv
+set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_id Top

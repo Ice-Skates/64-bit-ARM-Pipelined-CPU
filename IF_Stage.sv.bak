@@ -1,0 +1,47 @@
+module IF_Stage(sel_pc_src, instruction, ex_mem_out, pc_add4, rst);
+
+	input logic rst, clk;
+	input logic sel_pc_src;
+	input logic ex_mem_out;	//############ change name???
+	output logic [31:0] instruction;
+	
+	output logic [63:0] pc;
+	logic [63:0] pc_next; 
+	logic [63:0] pc_add4;
+	
+
+	
+
+	
+// ------------------ PC input -------------------------
+
+
+	Adder PC_Add4(.A(pc), .B(64'h0000000000000004), .result(pc_add4));
+
+	genvar i;
+		generate
+			for(int i = 0; i < 64; i++) begin: pc_src_muxs
+				mux2_1 pc_src_mux(.out(pc), .i0(pc_add4), .i1(ex_mem_out), .sel(sel_pc_src));
+				
+			end
+		endgenerate
+	
+	
+// ================ Program Counter =================
+	
+
+	genvar z;
+		generate			
+			for(z = 0; z < 64; z++) begin : pc_regs
+				singleReg writetoregister(.enable(1'b1), .writeData(pc_next[z]), .reset(rst),
+												  .clk(clk), .out(pc[z]));
+			end	
+	endgenerate	
+	
+
+// =============== instruction mem ================
+		
+	instructmem instructFetch(.address(pc), .instruction(instruction), .clk(clk)); //PC ---> instructmem
+	
+	
+endmodule 

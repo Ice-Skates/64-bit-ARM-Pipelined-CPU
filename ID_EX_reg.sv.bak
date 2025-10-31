@@ -1,0 +1,39 @@
+module ID_EX_reg(instruction_in, pc_in, instruction_out, pc_out);
+
+/*
+
+this incremented address 
+is also saved in the IF/ID pipeline register in case it is needed later
+for an instruction, such as beq. The computer cannot know which type of
+instruction is being fetched, so it must prepare for any instruction, passing
+potentially needed information down the pipeline
+
+*/
+
+	input logic 	[31:0] instruction_in;
+	input logic 	[63:0] pc_in;
+	
+	output logic 	[31:0] instruction_out;
+	output logic 	[63:0] pc_out;
+	
+	
+	genvar y;
+		generate			
+			for(y = 0; y < 64; y++) begin : instruct_reg
+				singleReg instruct_reg(.enable(1'b1), .writeData(pc_in[y]), .reset(rst),
+												  .clk(clk), .out(pc_out[y]));
+			end	
+	endgenerate	
+	
+	
+	
+	genvar z;
+		generate			
+			for(z = 0; z < 32; z++) begin : instruct_reg
+				singleReg instruct_reg(.enable(1'b1), .writeData(instruction_in[z]), .reset(rst),
+												  .clk(clk), .out(instruction_out[z]));
+			end	
+	endgenerate	
+	
+endmodule
+	

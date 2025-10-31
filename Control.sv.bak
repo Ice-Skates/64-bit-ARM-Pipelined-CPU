@@ -1,0 +1,319 @@
+`timescale 1ps/1ps
+
+module Control(clk, rst, instruction, Reg2Loc, UnconBr, BrTaken, MemRead, MemtoReg,
+					ALUOp, MemWrite, ALUSrc, RegWrite, takeImm, setFlags, RegBr, LinkBr);
+
+	input logic clk;
+	input logic rst;
+	input logic [10:0] instruction;
+	
+	output logic Reg2Loc;		
+	output logic UnconBr;
+	output logic BrTaken;		
+	output logic MemRead;		
+	output logic MemtoReg;			
+	output logic [1:0] ALUOp;			//This needs to be changed to 2'bxx for the rest of this module
+	output logic MemWrite;		
+	output logic ALUSrc;			
+	output logic RegWrite;		
+	output logic takeImm;
+	output logic setFlags;
+	output logic RegBr;
+	output logic LinkBr;
+	
+	
+	
+	always_comb begin
+	
+		Reg2Loc = 1'b0;
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b0;
+		MemWrite = 1'b0;
+		BrTaken = 1'b0;
+		UnconBr = 1'b0;
+		ALUOp = 3'b000;
+		MemRead = 1'b0;
+		takeImm = 1'b0;
+		setFlags = 1'b0;
+		RegBr = 1'b0;
+		LinkBr = 1'b0;
+
+	
+	if (instruction[10:1] == 10'b1001000100) begin			//------ADDI------
+	
+		Reg2Loc = 1'b0;
+		ALUSrc = 1'b1;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b1; 
+		MemWrite = 1'b0;
+		BrTaken = 1'b0;
+		UnconBr = 1'b0;
+		ALUOp = 3'b010;
+		MemRead = 1'b0;
+		takeImm = 1'b1;
+		setFlags = 1'b0;
+
+		
+		end
+
+	
+	else if (instruction[10:0] == 11'b10101011000) begin		//------ADDS------
+	
+		Reg2Loc = 1'b0;
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b1;
+		MemWrite = 1'b0;
+		BrTaken = 1'b0;
+		UnconBr = 1'b0;
+		ALUOp = 3'b010;
+		MemRead = 1'b0;
+		takeImm = 1'b0;
+		setFlags = 1'b1;
+		
+		end
+	
+	else if (instruction[10:0] == 11'b11101011000) begin	//------SUBS------
+	
+		Reg2Loc = 1'b0;
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b1;
+		MemWrite = 1'b0;
+		BrTaken = 1'b0;
+		UnconBr = 1'b0;
+		ALUOp = 3'b011;
+		MemRead = 1'b0;
+		takeImm = 1'b0;
+		setFlags = 1'b1;
+		
+		end
+	
+	else if (instruction[10:5] == 6'b000101) begin		//------B------
+	
+		Reg2Loc = 1'b0; // dont care
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b0;
+		MemWrite = 1'b0;
+		BrTaken = 1'b1;
+		UnconBr = 1'b1;
+		ALUOp = 3'b000;
+		MemRead = 1'b0;
+		takeImm = 1'b0;
+		setFlags = 1'b0;
+
+		
+		end
+	
+	else if (instruction[10:5] == 6'b100101) begin		//------BL------
+	
+		Reg2Loc = 1'b0;
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b1; //write to X30
+		MemWrite = 1'b0;
+		BrTaken = 1'b1;
+		UnconBr = 1'b1;
+		ALUOp = 3'b000; 
+		MemRead = 1'b0;
+		setFlags = 1'b0;
+		LinkBr = 1'b1;
+
+		
+		end
+	
+	else if (instruction[10:0] == 11'b11010110000) begin	//------BR------
+	
+	
+		Reg2Loc = 1'b1;
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b0;
+		MemWrite = 1'b0;
+		BrTaken = 1'b1;
+		UnconBr = 1'b1;
+		ALUOp = 3'b000;
+		MemRead = 1'b0;
+		setFlags = 1'b0;
+		RegBr = 1'b1;
+
+		
+		end
+
+	
+	else if (instruction[10:3] == 8'b10110100) begin		//------CBZ------
+	
+		Reg2Loc = 1'b1;
+		ALUSrc = 1'b0;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b0;
+		MemWrite = 1'b0;
+		BrTaken = 1'b1; 
+		UnconBr = 1'b0;
+		ALUOp = 3'b000; 
+		MemRead = 1'b0; 	
+		takeImm = 1'b0; 
+		setFlags = 1'b1;
+
+		
+		end
+	
+	
+	else if (instruction[10:3] == 8'b01010100) begin		//------B.LT------
+	
+		Reg2Loc = 1'b0;
+		ALUSrc = 1'b1; 
+		MemtoReg = 1'bx;
+		RegWrite = 1'b0;
+		MemWrite = 1'b0;
+		BrTaken = 1'b1; 
+		UnconBr = 1'b0;
+		ALUOp = 3'b011;
+		MemRead = 1'b0; 	
+		takeImm = 1'b0;
+		setFlags = 1'b0;
+
+		
+		end
+	
+	else if (instruction[10:0] == 11'b11111000010) begin		//------LDUR------
+	
+		Reg2Loc = 1'bx;
+		ALUSrc = 1'b1;
+		MemtoReg = 1'b1;
+		RegWrite = 1'b1;
+		MemWrite = 1'b0;
+		BrTaken = 1'b0;
+		UnconBr = 1'b0;
+		ALUOp = 3'b010;
+		MemRead = 1'b1; 
+		takeImm = 1'b0;
+		setFlags = 1'b0;
+
+		
+		end
+	
+	else if (instruction[10:0] == 11'b11111000000) begin		//------STUR------
+	
+		Reg2Loc = 1'b1;
+		ALUSrc = 1'b1;
+		MemtoReg = 1'b0;
+		RegWrite = 1'b0;
+		MemWrite = 1'b1;
+		BrTaken = 1'b0;
+		UnconBr = 1'b0;
+		ALUOp = 3'b010;
+		MemRead = 1'b0; 
+		takeImm = 1'b0;
+		setFlags = 1'b0;
+
+		 
+		
+		end
+		
+	end
+		
+endmodule
+		
+	
+	
+	/*
+	
+		Op codes:
+	
+	ADDI: 100 1000 100x
+	ADDS: 111 0101 0000
+	SUBS: 111 0101 1000
+
+	
+	B: 	000 101x xxxx
+	BL: 	100 101x xxxx
+	
+	BR: 	110 1011 0000
+	CBZ: 	101 1010 0xxx
+	
+	B.LT: 101 001x xxxx
+	
+	LDUR: 111 1100 0010
+	STUR: 111 1100 0000
+	
+	*/
+	
+	
+	
+module Control_testbench();	//TESTBENCH DOESNT WORK ANY MORE, CtrlUnit works though <================
+
+	parameter ClockDelay = 200;
+
+	logic clk;
+	logic rst;
+	logic [10:0] instruction;
+	
+	logic Reg2Loc;		// reg2loc enable 		instruction[25]
+	logic UnconBr;	// do later....
+	logic BrTaken;			// AND with ALU zero
+	logic MemRead;		// dataMem read enable
+	logic MemToReg;			// ALUout and readData mux enable
+	logic [2:0] ALUOp;			// ALU control
+	logic MemWrite;		// dataMem write enable
+	logic ALUSrc;			// readData2 and SE mux enable
+	logic RegWrite;		// regFile write
+	
+
+	Control ctrl(clk, rst, instruction, Reg2Loc, UnconBr, BrTaken, MemRead, MemToReg,
+				ALUOp, MemWrite, ALUSrc, RegWrite);
+				
+	initial begin
+	
+	$display("test works!");
+		
+		clk <= 0;
+		forever #(ClockDelay/2) clk <= ~clk;
+		
+	end
+	
+	integer i;
+
+	
+		initial begin
+		
+		rst = 1;
+		
+		#ClockDelay;
+
+		rst  = 0;
+
+		#ClockDelay;
+		
+		instruction = 11'b00000000000;
+		
+		#ClockDelay;
+		
+		instruction = 11'b10010001000;
+
+		#ClockDelay;
+		
+		instruction = 11'b11101010000;
+		
+		#ClockDelay;
+		
+		instruction = 11'b11010110001;
+		
+		#ClockDelay;
+		
+		instruction = 11'b00010110001;
+
+				#ClockDelay;
+
+						#ClockDelay;
+
+		
+		$stop;
+		
+	end
+	
+endmodule
+		
+	
